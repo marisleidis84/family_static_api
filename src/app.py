@@ -26,29 +26,17 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/members', methods=['GET'])
+@app.route('/members', methods=['GET', 'POST'])
 def handle_members():
     # this is how you can use the Family datastructure by calling its methods
-    members = jackson_family.get_all_members()
-    response_body = {
-        "family": members
-    }
-    return jsonify(response_body), 200
-
-@app.route('/members/<int:id>', methods=['GET', 'DELETE', 'PUT'])
-def handle_member(id = None):
     if request.method == 'GET':
-        member = jackson_family
-        if id > len(member._members):
-            return jsonify({"msg": "member not found"}), 404
-        return jsonify(member.get_member(id)), 200
-    
-    if request.method == 'DELETE':
-        pass
+        members = jackson_family.get_all_members()
+        response_body = {
+        "family": members
+        }
+        return jsonify(response_body), 200
 
-@app.route('/members', methods=['POST'])
-def handle_add():
-   if request.method == 'POST':
+    if request.method == 'POST':
         if not request.json.get ('first_name'):
             return jsonify({"first_name": "is required"}), 422
         if not request.json.get ('age'):
@@ -60,8 +48,42 @@ def handle_add():
         jackson_family.age = request.json.get('age')
         jackson_family.lucky_numbers = request.json.get('lucky_numbers')
 
-        member = jackson_family.add_member(jackson_family)
-        return jsonify(member), 200
+        jackson_family.add_member(jackson_family)
+        return jsonify({"result": "ok"}), 201
+
+@app.route('/members/<int:id>', methods=['GET', 'DELETE', 'PUT'])
+def handle_member(id = None):
+
+    if request.method == 'GET':
+        member = jackson_family
+        """ x=list(filter(lambda item: item["id"] == id, member._members))
+        print(x)
+        if x==[0]:
+             return jsonify({"msg": "member not found"}), 404 """
+        return jsonify(member.get_member(id)), 200
+    
+    if request.method == 'PUT':
+        if not request.json.get ('first_name'):
+            return jsonify({"first_name": "is required"}), 422
+        if not request.json.get ('age'):
+            return jsonify({"age": "is required"}), 422
+        if not request.json.get ('lucky_numbers'):
+            return jsonify({'lucky_numbers': 'is required'}), 422
+
+        update = {
+            "first_name": request.json.get("first_name"),
+            "age": request.json.get("age"),
+            "lucky_numbers": request.json.get("lucky_numbers")
+        }
+
+        jackson_family.update_member(id, update)
+        return jsonify({"result": "ok"}), 200  
+
+     if request.method == 'PUT':
+         pass  
+
+
+   
 
 
 # this only runs if `$ python src/app.py` is executed
