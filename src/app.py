@@ -26,7 +26,7 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/members', methods=['GET', 'POST'])
+@app.route('/members', methods=['GET'])
 def handle_members():
     # this is how you can use the Family datastructure by calling its methods
     if request.method == 'GET':
@@ -36,53 +36,62 @@ def handle_members():
         }
         return jsonify(response_body), 200
 
+@app.route('/member', methods=['POST'])
+def handle_post():
     if request.method == 'POST':
         if not request.json.get ('first_name'):
-            return jsonify({"first_name": "is required"}), 422
+            return jsonify({"first_name": "is required"}), 404
         if not request.json.get ('age'):
-            return jsonify({"age": "is required"}), 422
+            return jsonify({"age": "is required"}), 404
         if not request.json.get ('lucky_numbers'):
-            return jsonify({"lucky_numbers": "is required"}), 422
+            return jsonify({"lucky_numbers": "is required"}), 404
 
         jackson_family.first_name = request.json.get('first_name')
         jackson_family.age = request.json.get('age')
         jackson_family.lucky_numbers = request.json.get('lucky_numbers')
 
         jackson_family.add_member(jackson_family)
-        return jsonify({"result": "ok"}), 201
+        return jsonify({"result": "ok"}), 200
 
-@app.route('/members/<int:id>', methods=['GET', 'DELETE', 'PUT'])
-def handle_member(id = None):
+@app.route('/member/<int:id>', methods=['GET'])
+def handle_member_get(id):
 
     if request.method == 'GET':
-        member = jackson_family
-        """ x=list(filter(lambda item: item["id"] == id, member._members))
-        print(x)
-        if x==[0]:
-             return jsonify({"msg": "member not found"}), 404 """
-        return jsonify(member.get_member(id)), 200
+        member = jackson_family.get_member(id)
+        if not member:
+             return jsonify({"msg": "member not found"}), 400
+        else:
+            return jsonify(member), 200
     
+@app.route('/member/<int:id>', methods=['PUT'])
+def handle_member_update(id):
     if request.method == 'PUT':
         if not request.json.get ('first_name'):
-            return jsonify({"first_name": "is required"}), 422
+            return jsonify({"first_name": "is required"}), 404
         if not request.json.get ('age'):
-            return jsonify({"age": "is required"}), 422
+            return jsonify({"age": "is required"}), 404
         if not request.json.get ('lucky_numbers'):
-            return jsonify({'lucky_numbers': 'is required'}), 422
+            return jsonify({'lucky_numbers': 'is required'}), 404
 
-        update = {
-            "first_name": request.json.get("first_name"),
-            "age": request.json.get("age"),
-            "lucky_numbers": request.json.get("lucky_numbers")
-        }
+    update = {
+        "first_name": request.json.get("first_name"),
+        "age": request.json.get("age"),
+        "lucky_numbers": request.json.get("lucky_numbers")
+    }
 
-        jackson_family.update_member(id, update)
-        return jsonify({"result": "ok"}), 200  
+    jackson_family.update_member(id, update)
+    return jsonify({"result": "ok"}), 200  
 
-     if request.method == 'PUT':
-         pass  
+@app.route('/member/<int:id>', methods=['DELETE'])
+def handle_member_delete(id):
 
-
+    member = jackson_family.get_member(id)
+    if member:
+        jackson_family.delete_member(id)
+        return jsonify({"msg": "member deleted ok"}), 200
+    else:
+        return jsonify({"msg": "member not found"}), 400
+  
    
 
 
